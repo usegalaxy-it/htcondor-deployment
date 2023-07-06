@@ -34,7 +34,7 @@ Follow these steps to use the configuration:
 6. Generate a key pair:  
    - Generate new key by running `ssh-keygen`.  
    - Specify the public SSH key as the value of the `public_key` variable in the `vars.tf` file.
-   - Create the `terraform.tfvars` file. This file will not be exposed on github, specify sensitive values here in the form:  
+   - Create the `terraform.tfvars` file. This file will not be exposed on github if `.gitignore` is conserved. **Be sure to check `*terraform*` entry in `.gitignore` first**. Specify sensitive values here in the form:  
    ```
     pvt_key     = "<path_to_private_ssh_key>"
     condor_pass = "<condor_password>"
