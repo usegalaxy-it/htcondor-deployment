@@ -151,3 +151,45 @@ Submitting job(s).
 ```
 
 Check the `/data/share` directory to view the produced output and log files.
+
+## Optionally: Connect Submit Machine
+
+Starting from version 9.0.0, HTCondor introduces a new authentication mechanism called IDTOKENS. This method requires the same password to be set for all machines of the cluster. The condor_collector process (on Central Manager in this configuration) will automatically generate the pool signing key named POOL on startup if that file does not exist.
+Cron job running on CM allows to automatically approve tokens from machines within the CIDR range.  
+
+You can run the following play to install and configure HTCondor10 on the Submit VM.
+
+```YAML
+- name: Install HTCondor Submit
+  become: yes
+  hosts: <submit_vm>
+  pre_tasks:
+    - name: Disable SELinux
+      selinux:
+        state: disabled
+  roles:
+    - name: usegalaxy_eu.htcondor
+      vars:
+         condor_role: submit
+         condor_host: <condor_CM_private_IP>
+         condor_password: <condor_pass>
+         condor_allow_write: "*" 
+         condor_daemons:
+           - MASTER
+           - SCHEDD
+         condor_allow_negotiator: $(ALLOW_WRITE)
+         condor_allow_administrator: $(ALLOW_NEGOTIATOR)
+         condor_fs_domain: <domain_name>
+         condor_uid_domain: <domain_name>
+         condor_enforce_role: false
+```
+
+**NOTE!** If in some case you re-install HTCondor on CM, the signing key will be regenerated and other machines of the cluster will not be able to connect to CM automatically. From here 2 options are possible:
+1. You will need to rebuild other machines as well after CM is ready. The authentication will be done automatically.  
+2. Issue new token and specify it on Executors and Submit. 
+   - Signing key is generated during installation and is stored by default in `/etc/condor/passwords.d/POOL`.
+   - Create new IDTOKEN file with identity "condor" on CM:
+      ```
+      condor_token_create -identity condor@<domain_name>
+      ```
+   - Append the token to the file `~/.condor/tokens.d` on all the servers you want to join.
